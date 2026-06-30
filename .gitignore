@@ -1,4 +1,8 @@
 data/
+checkpoints/
 .ipynb_checkpoints/
 create_notebook.py
 update_results.py
+test_combined.py
+run_baseline_experiments.py
+train_and_save_best.py
