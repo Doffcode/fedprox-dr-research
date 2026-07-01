@@ -1,0 +1,2 @@
+experiment_id,alpha,mu,seed,strategy,straggler_fraction,final_global_accuracy,best_global_accuracy,convergence_round,local_on_test_accuracy_std,worst_client_local_on_test_accuracy,per_client_local_on_test,runtime_seconds
+alpha0.1_mu0.0_seed42_fedavg_straggler0.0_combined,0.1,0.0,42,fedavg,0.0,0.47572815533980584,0.5533980582524272,4,0.08326653935448936,0.3592233009708738,"[0.5631067961165048, 0.3592233009708738, 0.4563106796116505]",3868.040220975876
