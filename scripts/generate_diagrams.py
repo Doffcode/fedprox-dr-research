@@ -1,144 +1,90 @@
 import os
+import urllib.request
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 
+def render_kroki_post(text, diagram_type, output_path):
+    """Post diagram markup to Kroki public API to render as PNG."""
+    url = f"https://kroki.io/{diagram_type}/png"
+    print(f"Rendering {diagram_type} diagram via Kroki POST to {url} ...")
+    req = urllib.request.Request(
+        url, 
+        data=text.encode('utf-8'), 
+        headers={'Content-Type': 'text/plain', 'User-Agent': 'Mozilla/5.0'}
+    )
+    try:
+        with urllib.request.urlopen(req) as response:
+            with open(output_path, 'wb') as f:
+                f.write(response.read())
+        print(f"SUCCESS: Rendered {diagram_type} diagram to {output_path}")
+    except Exception as e:
+        print(f"ERROR rendering {diagram_type} diagram: {e}")
+
 def generate_diagram_1(out_dir):
-    """Diagram 1 — FL System Architecture (Section III)
-    Refined with larger canvas, zero text overlaps, and professional clinical color system.
+    """Diagram 1 — FL System Architecture (Section III) using Mermaid via Kroki"""
+    mermaid_code = """
+    flowchart TB
+      subgraph Server [Aggregation Server Coordinator]
+          GlobalCoordinator["Global Model Coordinator<br>(EfficientNet-B0 / RetinaCNN)"]
+      end
+
+      subgraph Hospital1 [Hospital Client 1]
+          H1Data[(Local Patient Data<br>Locked & Private)]
+          H1Model[Local Model Copy]
+      end
+
+      subgraph Hospital2 [Hospital Client 2]
+          H2Data[(Local Patient Data<br>Locked & Private)]
+          H2Model[Local Model Copy]
+      end
+
+      subgraph HospitalK [Hospital Client K]
+          HKData[(Local Patient Data<br>Locked & Private)]
+          HKModel[Local Model Copy]
+      end
+
+      H1Model <--> |"Weights Only (No Raw Data)"| GlobalCoordinator
+      H2Model <--> |"Weights Only (No Raw Data)"| GlobalCoordinator
+      HKModel <--> |"Weights Only (No Raw Data)"| GlobalCoordinator
+
+      H1Data -.-x |"Transmission Blocked<br>(DPDP Act 2023)"| GlobalCoordinator
+      H2Data -.-x |"Transmission Blocked<br>(DPDP Act 2023)"| GlobalCoordinator
+      HKData -.-x |"Transmission Blocked<br>(DPDP Act 2023)"| GlobalCoordinator
+
+      classDef serverStyle fill:#EBF5FB,stroke:#1B4F72,stroke-width:2px,color:#1B4F72,font-weight:bold;
+      classDef clientStyle fill:#F4F6F7,stroke:#566573,stroke-width:1.5px,color:#2C3E50;
+      classDef blockedStyle stroke:#E74C3C,stroke-width:2px,stroke-dasharray: 5 5;
+      
+      class GlobalCoordinator serverStyle;
+      class H1Model,H2Model,HKModel clientStyle;
     """
-    fig, ax = plt.subplots(figsize=(10, 7.5))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 8)
-    ax.axis('off')
-
-    # Central Aggregation Server (Top)
-    server_box = patches.FancyBboxPatch((3.0, 5.2), 4.0, 1.8, boxstyle="round,pad=0.2", 
-                                        fc="#EBF5FB", ec="#1B4F72", lw=2)
-    ax.add_patch(server_box)
-    ax.text(5.0, 6.1, "Aggregation Server\n(Global Model Coordinator)", 
-            ha="center", va="center", fontsize=11, fontweight="bold", color="#1B4F72")
-
-    # Three Client Boxes (Bottom)
-    clients = [
-        {"x": 0.5, "y": 0.8, "name": "Hospital Client 1\n(Local Patient Data Locked)\n[Local Model Copy]"},
-        {"x": 3.75, "y": 0.8, "name": "Hospital Client 2\n(Local Patient Data Locked)\n[Local Model Copy]"},
-        {"x": 7.0, "y": 0.8, "name": "Hospital Client K\n(Local Patient Data Locked)\n[Local Model Copy]"}
-    ]
-    
-    for c in clients:
-        box = patches.FancyBboxPatch((c["x"], c["y"]), 2.5, 1.8, boxstyle="round,pad=0.15", 
-                                     fc="#F4F6F7", ec="#566573", lw=1.5)
-        ax.add_patch(box)
-        ax.text(c["x"] + 1.25, c["y"] + 0.9, c["name"], 
-                ha="center", va="center", fontsize=9, color="#2C3E50", linespacing=1.3)
-
-    # Connections (Model Weight Exchanges)
-    # Arrow 1: Client 1 <-> Server
-    ax.annotate("", xy=(3.2, 5.0), xytext=(1.8, 2.9),
-                arrowprops=dict(arrowstyle="<->", lw=2, color="#27AE60", mutation_scale=15))
-    # Arrow 2: Client 2 <-> Server
-    ax.annotate("", xy=(5.0, 5.0), xytext=(5.0, 2.9),
-                arrowprops=dict(arrowstyle="<->", lw=2, color="#27AE60", mutation_scale=15))
-    # Arrow 3: Client K <-> Server
-    ax.annotate("", xy=(6.8, 5.0), xytext=(8.2, 2.9),
-                arrowprops=dict(arrowstyle="<->", lw=2, color="#27AE60", mutation_scale=15))
-
-    # Bidirectional model weight exchange labels (placed outside arrow line paths to prevent overlap)
-    ax.text(1.9, 4.2, "Model Updates", rotation=54, ha="center", va="center", fontsize=8.5, color="#27AE60", fontweight="bold")
-    ax.text(5.5, 3.8, "Weights Only", rotation=90, ha="center", va="center", fontsize=8.5, color="#27AE60", fontweight="bold")
-    ax.text(8.1, 4.2, "Model Updates", rotation=-54, ha="center", va="center", fontsize=8.5, color="#27AE60", fontweight="bold")
-
-    # Crossed-out Arrow representing blocked raw data transfer (DPDP Act 2023)
-    ax.annotate("", xy=(5.0, 4.9), xytext=(5.0, 3.0),
-                arrowprops=dict(arrowstyle="-", lw=2, color="#C0392B", linestyle="--"))
-    ax.text(5.0, 4.3, "X", color="#C0392B", fontsize=32, fontweight="bold", ha="center", va="center")
-    
-    # Red warning box centered and padded
-    ax.text(5.0, 3.2, "RAW PATIENT DATA LOCALIZED\nTransmission Blocked under DPDP Act 2023", 
-            color="#C0392B", fontsize=8, fontweight="bold", ha="center", va="center",
-            bbox=dict(boxstyle="round,pad=0.3", fc="#FDEDEC", ec="#E74C3C", lw=1.5))
-
-    # Header title with plenty of breathing room
-    ax.text(5.0, 7.6, "Federated Learning Silo Architecture", ha="center", va="center", fontsize=14, fontweight="bold", color="#1B4F72")
-
-    plt.tight_layout()
-    fig.savefig(os.path.join(out_dir, "fig_architecture.png"), dpi=300, bbox_inches="tight")
-    plt.close(fig)
-    print("Generated refined Diagram 1.")
+    render_kroki_post(mermaid_code, "mermaid", os.path.join(out_dir, "fig_architecture.png"))
 
 def generate_diagram_2(out_dir):
-    """Diagram 2 — Three-Phase Research Journey (Section I/III)
-    Refined for horizontal timeline with bullet alignments and zero arrow-box intersections.
+    """Diagram 2 — Three-Phase Research Journey (Section I/III) using Mermaid via Kroki"""
+    mermaid_code = """
+    graph LR
+        P1["Phase 1: RetinaMNIST<br>• Controlled Synthetic Benchmark<br>• 1,080 Resized Images (28x28)<br>• Custom 3-Layer RetinaCNN<br>• Parameter Sweep (alpha & mu)<br>• Localized Dirichlet Skew"]
+        P2["Phase 1B: IDRiD Only<br>• Real Clinical Fundus Scans<br>• 413 High-Res Patient Images<br>• EfficientNet-B0 Backbone<br>• High Seed-to-Seed Variance<br>• Proven Statistically Underpowered"]
+        P3["Phase 2: IDRiD + APTOS<br>• Combined Large-scale Clinical Pipeline<br>• 4,075 Clinical Patient Images<br>• Multi-Silo Scaling Verification<br>• Power Restored (Beta Locked)<br>• Reclaims Centralized Upper Bound"]
+
+        P1 --> |Clinical Validation| P2
+        P2 --> |Scale Resolution| P3
+
+        classDef boxStyle fill:#EBF5FB,stroke:#2E86C1,stroke-width:2px,color:#1B4F72,font-weight:bold;
+        classDef boxStyle2 fill:#E8F8F5,stroke:#27AE60,stroke-width:2px,color:#196F3D,font-weight:bold;
+        classDef boxStyle3 fill:#FEF9E7,stroke:#D35400,stroke-width:2px,color:#A04000,font-weight:bold;
+        
+        class P1 boxStyle;
+        class P2 boxStyle2;
+        class P3 boxStyle3;
     """
-    fig, ax = plt.subplots(figsize=(11, 4.5))
-    ax.set_xlim(0, 12)
-    ax.set_ylim(0, 4)
-    ax.axis('off')
-
-    # Phase 1 Box (Synthetic Benchmark)
-    p1 = patches.FancyBboxPatch((0.4, 0.6), 3.0, 2.5, boxstyle="round,pad=0.15", 
-                                 fc="#EBF5FB", ec="#2E86C1", lw=2)
-    ax.add_patch(p1)
-    ax.text(1.9, 2.8, "Phase 1: RetinaMNIST", ha="center", va="center", fontsize=10.5, fontweight="bold", color="#1B4F72")
-    p1_details = (
-        "• Controlled Synthetic Benchmark\n"
-        "• 1,080 Resized Images (28x28)\n"
-        "• Custom 3-Layer RetinaCNN\n"
-        "• Parameter Sweep (α & μ)\n"
-        "• Localized Dirichlet Skew"
-    )
-    ax.text(1.9, 1.5, p1_details, ha="center", va="center", fontsize=8.5, color="#2C3E50", linespacing=1.3)
-
-    # Connection 1 -> 2 (Horizontal Arrow with offset labels)
-    ax.annotate("", xy=(4.2, 1.85), xytext=(3.6, 1.85),
-                arrowprops=dict(arrowstyle="->", lw=2, color="#1B4F72", mutation_scale=12))
-    ax.text(3.9, 2.1, "Clinical\nValidation", ha="center", va="bottom", fontsize=8, fontweight="bold", color="#1B4F72")
-
-    # Phase 1B Box (IDRiD Only Clinical Sweep)
-    p2 = patches.FancyBboxPatch((4.4, 0.6), 3.0, 2.5, boxstyle="round,pad=0.15", 
-                                 fc="#E8F8F5", ec="#27AE60", lw=2)
-    ax.add_patch(p2)
-    ax.text(5.9, 2.8, "Phase 1B: IDRiD Only", ha="center", va="center", fontsize=10.5, fontweight="bold", color="#196F3D")
-    p2_details = (
-        "• Real Clinical Fundus Scans\n"
-        "• 413 High-Res Patient Images\n"
-        "• EfficientNet-B0 Backbone\n"
-        "• High Seed-to-Seed Variance\n"
-        "• Proven Statistically Underpowered"
-    )
-    ax.text(5.9, 1.5, p2_details, ha="center", va="center", fontsize=8.5, color="#2C3E50", linespacing=1.3)
-
-    # Connection 2 -> 3
-    ax.annotate("", xy=(8.2, 1.85), xytext=(7.6, 1.85),
-                arrowprops=dict(arrowstyle="->", lw=2, color="#196F3D", mutation_scale=12))
-    ax.text(7.9, 2.1, "Scale\nResolution", ha="center", va="bottom", fontsize=8, fontweight="bold", color="#196F3D")
-
-    # Phase 2 Box (Combined Large-scale Clinical Pipeline)
-    p3 = patches.FancyBboxPatch((8.4, 0.6), 3.0, 2.5, boxstyle="round,pad=0.15", 
-                                 fc="#FEF9E7", ec="#D35400", lw=2)
-    ax.add_patch(p3)
-    ax.text(9.9, 2.8, "Phase 2: IDRiD + APTOS", ha="center", va="center", fontsize=10.5, fontweight="bold", color="#A04000")
-    p3_details = (
-        "• Ingested APTOS Retinal Dataset\n"
-        "• 4,075 Clinical Patient Images\n"
-        "• Multi-Silo Scaling Verification\n"
-        "• Power Restored (Beta Locked)\n"
-        "• Reclaims Centralized Upper Bound"
-    )
-    ax.text(9.9, 1.5, p3_details, ha="center", va="center", fontsize=8.5, color="#2C3E50", linespacing=1.3)
-
-    # Timeline flow line header
-    ax.text(6.0, 3.6, "Three-Phase Research Roadmap Summary", ha="center", va="center", fontsize=13, fontweight="bold", color="#1B4F72")
-
-    plt.tight_layout()
-    fig.savefig(os.path.join(out_dir, "fig_research_journey.png"), dpi=300, bbox_inches="tight")
-    plt.close(fig)
-    print("Generated refined Diagram 2.")
+    render_kroki_post(mermaid_code, "mermaid", os.path.join(out_dir, "fig_research_journey.png"))
 
 def generate_diagram_3(out_dir):
     """Diagram 3 — FedProx Proximal Term Concept (Section III)
-    Refined with legends positioned outside circles, clean math markers, and distinct boundaries.
+    High resolution conceptual math plot using Matplotlib (300 DPI).
     """
     fig, ax = plt.subplots(figsize=(6.5, 6))
     ax.set_xlim(-4, 4)
