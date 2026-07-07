@@ -80,7 +80,6 @@ def add_equation_block(doc, equation_text, label=""):
     run.font.italic = True
     
     if label:
-        # Pad to push label to the right side of the page
         p.add_run(f"\t\t\t\t\t\t\t\t\t{label}")
     return p
 
@@ -162,22 +161,23 @@ def main():
     # --- ABSTRACT ---
     add_heading_with_spacing(doc, "Abstract", level=2, space_before=12, space_after=4)
     abstract_text = (
-        "Diabetic Retinopathy (DR) represents an escalating public health challenge in India, where an estimated "
-        "101 million individuals live with diabetes mellitus. Early screening is vital to mitigate preventable blindness, "
-        "yet regional diagnostic infrastructure is limited by a severe shortage of rural ophthalmologists. While centralized "
-        "deep learning pipelines achieve high clinical diagnostic performance, aggregating patient retinal fundus images "
-        "cross-institutionally violates patient privacy and runs counter to the localization mandates of the Indian Digital "
-        "Personal Data Protection (DPDP) Act of 2023. Federated Learning (FL) presents a viable solution by enabling "
-        "decentralized clinical nodes to collaboratively train models without transmitting raw medical data. In this study, "
-        "we construct a robust single-process manual FL simulation loop to compare the Federated Averaging (FedAvg) and "
-        "Federated Proximal (FedProx) algorithms under varying degrees of simulated statistical heterogeneity (non-IID) modeled "
-        "using Dirichlet distributions. We benchmark optimization performance using two datasets: the synthetic RetinaMNIST "
-        "benchmark (with a custom 3-layer RetinaCNN) and clinical fundus image data from the Indian Diabetic Retinopathy "
-        "Image Dataset (IDRiD) using a pre-trained EfficientNet-B0 backbone. Empirically, we verify a performance phase transition "
-        "where proximal regularization degrades global accuracy under severe class skew but improves performance under moderate skew. "
-        "Crucially, we prove that FedProx serves as a clinical fairness stabilizer, boosting worst-client accuracy by up to 27.69% "
-        "and reducing inter-client variance. Furthermore, we establish the statistical limits of small-scale clinical datasets "
-        "through a Cohen's d power analysis, validating the necessity of a combined 4,075-image IDRiD+APTOS scaling pipeline."
+        "Diabetic retinopathy is one of the leading causes of preventable blindness in India, a country with over 101 million "
+        "people living with diabetes. Screening is the bottleneck: most rural areas simply don't have enough ophthalmologists, "
+        "and a large share of cases go undiagnosed until vision loss is already advanced. Deep learning models can grade retinal "
+        "images automatically, but training them well normally means pooling large amounts of patient data from different "
+        "hospitals — something India's Digital Personal Data Protection Act (2023) makes legally difficult, since it requires "
+        "patient data to stay where it was collected. Federated learning offers a way around this: instead of moving data "
+        "to a central server, the model itself moves between hospitals, and only its weights are shared. "
+        "This project builds a federated learning simulation from scratch to study how FedAvg and FedProx behave when hospital "
+        "data is highly imbalanced — some clinics seeing mostly healthy patients, others seeing mostly severe cases. We test "
+        "this on two datasets: RetinaMNIST, a small controlled benchmark, and IDRiD, a real clinical dataset collected in "
+        "Karnataka, India. The central finding is that FedProx doesn't behave the same way across all conditions — it can "
+        "hurt accuracy when data is extremely skewed, but help once the skew is more moderate, revealing a clear switch-over "
+        "point that hasn't been characterized this way before. We also find that FedProx makes the worst-performing hospital "
+        "substantially more accurate, even in cases where it doesn't change the overall average — a fairness effect that "
+        "matters more in a clinical setting than raw accuracy alone. Finally, a statistical power analysis suggests that "
+        "IDRiD's small size limits how confidently these effects can be measured, which motivated scaling up with a "
+        "combined IDRiD+APTOS dataset."
     )
     add_paragraph_with_spacing(doc, abstract_text, line_spacing=1.15, align=WD_ALIGN_PARAGRAPH.JUSTIFY)
     
@@ -193,52 +193,35 @@ def main():
     add_heading_with_spacing(doc, "Section I: Introduction", level=1, space_before=18)
     
     intro_1 = (
-        "Diabetic Retinopathy (DR) is a microvascular complication of diabetes mellitus that leads to progressive, "
-        "irreversible vision impairment if left diagnosed. India currently bears a substantial share of the global diabetic "
-        "burden, with over 101 million diagnosed individuals and another 136 million classified as pre-diabetic. The clinical "
-        "screening pipeline is severely bottlenecked: the ratio of ophthalmologists to the population in rural India is "
-        "critically low, leaving over 50-70% of diabetic patients unscreened until advanced visual deficit occurs. Deep learning "
-        "architectures, particularly Convolutional Neural Networks (CNNs), have demonstrated near-human classification accuracy "
-        "in grading DR severity from color fundus photographs. Training these models requires aggregating hundreds of thousands "
-        "of high-resolution clinical images from diverse demographic populations to generalize across variations in fundus camera optics, "
-        "lighting conditions, and clinical cohorts."
+        "Diabetic retinopathy develops when high blood sugar damages the blood vessels in the retina. Left unchecked, it leads "
+        "to permanent vision loss — but caught early, it's manageable. The problem in India isn't the disease itself, it's access: "
+        "there simply aren't enough ophthalmologists to screen the country's diabetic population, and a large share of patients "
+        "don't get diagnosed until the damage is already severe. Convolutional neural networks have gotten quite good at grading "
+        "retinal images automatically, but they need a lot of varied training data to generalize across different cameras, "
+        "lighting setups, and patient populations. That data usually lives in different hospitals, and getting it all into one "
+        "place isn't just a technical problem — it runs into India's 2023 data protection law directly."
     )
     add_paragraph_with_spacing(doc, intro_1)
     
     intro_2 = (
-        "Centralized data aggregation, however, faces significant regulatory and ethical barriers. In 2023, India enacted the "
-        "Digital Personal Data Protection (DPDP) Act, which strictly regulates the processing of personal and sensitive personal "
-        "data. The DPDP Act enforces strict consent architecture, patient-centric data deletion rights, and localization principles. "
-        "Hospitals and diagnostic clinics can no longer legally upload raw clinical datasets to external cloud servers or share "
-        "patient retinal scans with third-party developers without substantial compliance overhead and legal liability. This creates "
-        "an architectural impasse: clinical institutions cannot centralize patient data to train diagnostic networks, yet local "
-        "datasets at individual clinics are too small and class-imbalanced to build robust models independently."
+        "The DPDP Act requires that personal data, including medical scans, largely stay where it was collected, with strict "
+        "rules around consent and deletion. That leaves hospitals in an awkward spot: they can't send their data elsewhere to "
+        "build a shared model, but on their own, most clinics don't have enough images (or enough variety in cases) to train "
+        "something reliable. Federated learning is built for exactly this situation — the model is trained locally at each hospital "
+        "and only its parameters are sent to a central server for averaging, so the raw scans never leave the building."
     )
     add_paragraph_with_spacing(doc, intro_2)
     
     intro_3 = (
-        "Federated Learning (FL) resolves this conflict by shifting from data aggregation to model aggregation. Under the FL "
-        "framework, the clinical model parameters travel between hospital client nodes while patient data remains localized inside "
-        "each institution's firewall. Standard Federated Averaging (FedAvg) aggregates client weights using sample-weighted averaging. "
-        "However, clinical networks in India exhibit massive statistical heterogeneity (non-IID data) across regional silos. Hospitals "
-        "face significant variation in class distribution (clinical skew) and sample size (volume skew) due to regional demographic "
-        "imbalances and clinical specializations (e.g., tertiary eye care centers versus primary clinics). In these heterogeneous regimes, "
-        "local models drift toward local minima, causing FedAvg's aggregated global model to diverge."
+        "The standard method, FedAvg, works well when different hospitals' data looks roughly similar. It doesn't work as well when "
+        "it doesn't. In practice, one hospital's patient population might be mostly mild or undiagnosed cases, while another sees "
+        "almost exclusively severe, referred cases — and when each hospital trains on only its own skewed slice of the world, "
+        "their models start pulling in different directions. Averaging models that disagree this much doesn't produce a good "
+        "global model; it produces one that's confused. FedProx was proposed as a fix, adding a term to each hospital's local "
+        "training that discourages it from drifting too far from the shared model. What's less clear — and what this project "
+        "investigates — is exactly when that correction actually helps, and when it gets in the way."
     )
     add_paragraph_with_spacing(doc, intro_3)
-
-    intro_4 = (
-        "To mitigate client drift under non-IID conditions, regularized frameworks like FedProx introduce a proximal regularization "
-        "penalty (parameter μ) that limits the deviation of local updates from the global model state. However, the exact operational "
-        "boundaries under which proximal regularization helps or hurts global convergence and local client equity remain poorly "
-        "characterized in clinical settings. This study addresses this gap by executing a rigorous hyperparameter sweep across Dirichlet "
-        "concentration parameters (α ∈ {0.05, 0.1, 0.3, 1.0}) and regularization weights (μ ∈ {0.0, 0.01, 0.1, 1.0}). "
-        "Furthermore, we analyze the performance of a third algorithm, SCAFFOLD, which utilizes control variates to correct client-drift, "
-        "detailing an implementation bug in the control variates that was successfully resolved during our verification sweep. "
-        "Finally, we analyze the statistical power limits of small clinical cohorts, demonstrating the mathematical necessity of "
-        "multi-silo pipeline scaling via a combined 4,075-image training set."
-    )
-    add_paragraph_with_spacing(doc, intro_4)
     
     # Diagram 2 - Research Journey inserted at the end of Section I
     p_img_journey = doc.add_paragraph()
@@ -253,40 +236,35 @@ def main():
     add_heading_with_spacing(doc, "Section II: Related Work", level=1, space_before=18)
     
     rw_1 = (
-        "The literature surrounding collaborative machine learning for medical imaging is grouped into three main categories: "
-        "(a) centralized diabetic retinopathy classification, (b) optimization algorithms for federated learning under client drift, "
-        "and (c) empirical benchmarking under simulated statistical heterogeneity."
+        "Most work on collaborative learning for medical imaging falls into three buckets: standard centralized classification "
+        "models, federated optimization algorithms designed to combat client drift, and empirical tests under simulated data skew."
     )
     add_paragraph_with_spacing(doc, rw_1)
 
     rw_2 = (
-        "Centralized deep learning models for diabetic retinopathy grading have achieved significant success using pre-trained "
-        "backbones like ResNet and EfficientNet. However, these models depend entirely on centralized clinical databases. The "
-        "emergence of federated learning in healthcare [1] offered a privacy-preserving alternative. Collaborative architectures "
-        "specifically applied to medical imaging [7] highlight the feasibility of training diagnostic classifiers on fundus images "
-        "without aggregating raw scans. Despite these advancements, medical datasets suffer from extreme class imbalances and scanner "
-        "heterogeneity, which compromises model generalization."
+        "Centralized deep learning models for diabetic retinopathy have gotten very good, typically using backbones like ResNet and "
+        "EfficientNet. The catch is that they rely on having all the training data in one place. Federated learning [1] was "
+        "introduced to avoid this requirement in healthcare. Recent papers [7] show it is possible to train diagnostic classifiers "
+        "on retinal images without moving raw scans. Even so, medical federated learning still struggles with clinical skew and "
+        "variation in camera hardware, which can cause local updates to diverge."
     )
     add_paragraph_with_spacing(doc, rw_2)
 
     rw_3 = (
-        "To stabilize decentralized training, optimization variants have modified the local loss function. The foundational algorithm, "
-        "Federated Averaging (FedAvg) [1], performs local gradient updates and aggregates parameters at the server. FedProx [2] restricts "
-        "local client drift by adding an L₂ proximal term, penalizing updates that deviate from the global model. In parallel, "
-        "variance-reduction methods like SCAFFOLD [3] introduce global and client control variates to dynamically correct the gradient "
-        "update directions. Empirical surveys of federated optimization [5] show that while regularization is highly effective under "
-        "moderate heterogeneity, its performance degrades under severe non-IID conditions, emphasizing the need to characterize "
-        "regularization thresholds."
+        "To keep local training from drifting, researchers usually modify the local loss function. The base method, FedAvg [1], "
+        "simply averages client weights. FedProx [2] restricts how far local parameters can wander by adding an L₂ proximal penalty "
+        "that keeps client updates anchored near the global model. Meanwhile, SCAFFOLD [3] uses control variates to track and "
+        "correct gradient updates. Surveys [5] suggest that while regularization can stabilize training under moderate skew, it "
+        "often hurts convergence under extreme non-IID conditions. The threshold where this behavior flips is what we focus on."
     )
     add_paragraph_with_spacing(doc, rw_3)
 
     rw_4 = (
-        "Simulating clinical heterogeneity is typically achieved using Dirichlet distribution partitioning. First popularized by Hsu et al. "
-        "[4], class-wise Dirichlet sampling allocates class indices to simulated client nodes using a concentration parameter α. "
-        "Under small concentration parameters (e.g., α < 0.1), the partitioner models severe, realistic diagnostic skew where "
-        "individual clinics lack entire categories of disease. Lightweight benchmarks like RetinaMNIST (from MedMNIST v2) [6] provide "
-        "a standardized, computationally tractable platform to run extensive hyperparameter grids, allowing researchers to isolate "
-        "the impacts of class skew and regularization without the confounding effects of extremely high-resolution image processing."
+        "Simulating clinical heterogeneity in a lab setting is typically done using Dirichlet distributions. Class-wise Dirichlet "
+        "sampling, introduced by Hsu et al. [4], distributes classes to clients based on a concentration parameter α. Lower α "
+        "values (like α < 0.1) simulate severe skew, where some clinics lack entire categories of disease. Lightweight benchmarks "
+        "like RetinaMNIST (part of MedMNIST v2) [6] let us run wide hyperparameter sweeps on small images, isolating the effect "
+        "of skew and regularization without the computational baggage of high-resolution processing."
     )
     add_paragraph_with_spacing(doc, rw_4)
 
@@ -295,33 +273,29 @@ def main():
     
     add_heading_with_spacing(doc, "1. Network Architectures", level=2)
     meth_arch_1 = (
-        "To classify the 5 grades of Diabetic Retinopathy (DR) on the 28x28 pixel images of the RetinaMNIST dataset, we design "
-        "RetinaCNN, a customized 3-layer Convolutional Neural Network. RetinaCNN comprises three sequential Conv2d "
-        "blocks. Block 1 utilizes 16 output filters (3×3 kernel, stride=1, padding=1) followed by BatchNorm2d, a ReLU activation, "
-        "and MaxPool2d (stride=2), reducing spatial dimensions to 14x14. Block 2 scales channel width to 32 filters, outputting 7x7 spatial "
-        "maps. Block 3 utilizes 64 filters, yielding 3x3 maps. The classifier head flattens the 576-dimensional feature representation "
-        "and routes it through a Linear layer (128 units), a ReLU activation, a Dropout layer (p=0.3), and a final Linear projection "
-        "layer to output 5 logits corresponding to the 5 DR severity grades. The total trainable parameter count is exactly 98,309 (as "
-        "verified via structural numel queries), ensuring rapid convergence and preventing overfitting on small client silos."
+        "For the small 28x28 images in RetinaMNIST, we use RetinaCNN, a basic 3-layer convolutional network. It consists of "
+        "three convolutional blocks: the first has 16 filters (3×3 kernel, stride 1, padding 1) with BatchNorm and MaxPool, "
+        "shrinking the map to 14x14; the second has 32 filters (yielding 7x7); and the third has 64 filters (yielding 3x3). "
+        "The classifier flattens this 576-dimensional output and runs it through a 128-unit linear layer, ReLU, dropout (p=0.3), "
+        "and a final 5-unit projection. This model contains exactly 98,309 parameters, which is small enough to train quickly "
+        "without overfitting on small partitions."
     )
     add_paragraph_with_spacing(doc, meth_arch_1)
     
     meth_arch_2 = (
-        "For clinical grading on the high-resolution Indian Diabetic Retinopathy Image Dataset (IDRiD) from Vijayanagar Institute of Medical "
-        "Sciences, Karnataka, we employ a pre-trained EfficientNet-B0 backbone (5.3M parameters) via the timm library. The model is "
-        "pretrained on ImageNet, and the final classification layer is replaced with a 5-unit Linear classifier. Retinal fundus photographs "
-        "are dynamically resized to 224x224 pixels, normalized, and augmented with random cropping, horizontal flipping, rotation, and "
-        "ColorJitter (brightness and contrast) to simulate clinical imaging variations."
+        "For the clinical IDRiD images, we use a pre-trained EfficientNet-B0 backbone (about 5.3 million parameters) via the "
+        "timm library. We swap the final classification head for a 5-unit linear layer to match the diabetic retinopathy grades. "
+        "The fundus photographs are resized to 224x224, normalized, and augmented with random crops, flips, rotation, and color "
+        "jitter to mimic variations in camera hardware and lighting."
     )
     add_paragraph_with_spacing(doc, meth_arch_2)
     
     add_heading_with_spacing(doc, "2. Statistical Data Heterogeneity Modeling", level=2)
     meth_het_1 = (
-        "To simulate clinical data partitions across K hospital nodes, we employ class-wise Dirichlet partitioning [4]. For each "
-        "DR grade class c ∈ {0, 1, 2, 3, 4}, we sample a partition vector q_c ~ Dirichlet(α · 1_K) where α is the "
-        "concentration parameter. The client allocation index distributes samples such that lower α values (e.g., α = 0.05) "
-        "result in severe class exclusion across clients. In this study, we swept α ∈ {0.05, 0.1, 0.3, 1.0} to cover "
-        "regimes from extreme clinical skew (where clients only have 1 or 2 classes) to homogeneous class structures (near-IID)."
+        "We simulate skewed data distributions across K hospital clients using Dirichlet partitioning [4]. For each disease grade "
+        "c ∈ {0, 1, 2, 3, 4}, we draw client proportions from a Dirichlet distribution with parameter α. Small α values "
+        "(e.g., α = 0.05) mean some classes are completely missing from certain clients. We sweep α through 0.05, 0.1, 0.3, "
+        "and 1.0 to see how optimization algorithms handle the transition from extreme class skew to a near-IID setup."
     )
     add_paragraph_with_spacing(doc, meth_het_1)
     
@@ -336,12 +310,11 @@ def main():
     
     add_heading_with_spacing(doc, "3. Federated Simulation Environment", level=2)
     meth_env_1 = (
-        "The federated system is implemented as a manual, single-process Python training loop. This implementation design was chosen "
-        "intentionally to circumvent the VRAM overhead and runtime instability of distributed frameworks (such as Flower, Ray, or Docker) "
-        "on compute-constrained workstations. The simulation ran on a local Ubuntu workstation equipped with an Intel Core i7-13700 CPU "
-        "and an NVIDIA RTX A2000 12GB VRAM GPU. The local training loops utilize PyTorch's native Cuda structures. Parallel data loading "
-        "is implemented using DataLoader with num_workers=4 and pin_memory=True to eliminate disk I/O bottlenecks. "
-        "Figure 3 visually maps this client-server topology, highlighting the privacy constraints."
+        "We built the federated loop in a single process rather than using distributed frameworks like Flower or Ray. This avoids "
+        "the VRAM overhead and configuration headaches that usually come with running distributed software on a single workstation. "
+        "All training runs on a local Ubuntu workstation with an Intel i7-13700 CPU and a single NVIDIA RTX A2000 GPU (12GB VRAM). "
+        "The simulation handles PyTorch CUDA allocation, using four workers and pinned memory to prevent data-loading bottlenecks. "
+        "Figure 3 shows this setup, highlighting the boundary that keeps patient data inside each client silo."
     )
     add_paragraph_with_spacing(doc, meth_env_1)
     
@@ -356,26 +329,25 @@ def main():
     
     add_heading_with_spacing(doc, "4. Optimization Algorithms and Formulations", level=2)
     meth_alg_1 = (
-        "The baseline Federated Averaging (FedAvg) aggregates parameters by computing a sample-size weighted average: "
+        "In Federated Averaging (FedAvg), the server updates the global model by taking a sample-weighted average of the client "
+        "parameters at each round:"
     )
     add_paragraph_with_spacing(doc, meth_alg_1, space_after=2)
     add_equation_block(doc, "wᵗ⁺¹ = ∑_{k=1}^K (n_k / N) · w_k^(t+1)")
     
     meth_alg_1b = (
-        "where w_k^(t+1) represents local weight parameters updated over E epochs at client k using standard Cross-Entropy Loss."
+        "where w_k^(t+1) represents the local weights updated at client k over E epochs using standard Cross-Entropy Loss."
     )
     add_paragraph_with_spacing(doc, meth_alg_1b, space_before=2)
     
     meth_alg_2 = (
-        "The Federated Proximal (FedProx) algorithm [2] modifies the local objective function by adding an L₂ regularization penalty "
-        "to restrict local parameter drift:"
+        "FedProx [2] adds a proximal penalty to the local client loss to penalize updates that move too far from the global starting point:"
     )
     add_paragraph_with_spacing(doc, meth_alg_2, space_after=2)
     add_equation_block(doc, "L_k(w; wᵗ) = F_k(w) + (μ / 2) · ‖w - wᵗ‖₂²")
     
     meth_alg_2b = (
-        "where wᵗ is the broadcast global model parameter set at round t, and μ is the regularization multiplier. The parameter "
-        "difference term acts as a trust region constraint."
+        "The parameter μ scales this penalty, which acts as a trust region constraint around the global model wᵗ."
     )
     add_paragraph_with_spacing(doc, meth_alg_2b, space_before=2)
     
@@ -389,22 +361,20 @@ def main():
     p_img_prox_cap.runs[0].font.italic = True
     
     meth_alg_3 = (
-        "For SCAFFOLD [3], the client updates are corrected using control variates. The local gradient step is adjusted by the difference "
-        "between the global control variate c and the client control variate c_k:"
+        "SCAFFOLD [3] takes a different approach, adjusting the local gradient step using client and server control variates (c_k and c):"
     )
     add_paragraph_with_spacing(doc, meth_alg_3, space_after=2)
     add_equation_block(doc, "g_k(w) = ∇F_k(w) + (c - c_k)")
     
     meth_alg_3b = (
-        "At the end of local training, the client control variate is updated. To avoid momentum mismatch under adaptive optimizers or SGD "
-        "momentum, we implement the gradient-accumulation Option II variant of SCAFFOLD, where c_k⁺ is computed directly from the average "
-        "uncorrected local gradients accumulated over the step:"
+        "We implement the gradient-accumulation (Option II) version of SCAFFOLD. This avoids issues when using SGD with momentum "
+        "or adaptive optimizers by updating the client control variates from the uncorrected gradients accumulated during the step:"
     )
     add_paragraph_with_spacing(doc, meth_alg_3b, space_before=2, space_after=2)
     add_equation_block(doc, "c_k⁺ ← (1 / K_steps) · ∑_{s=1}^{K_steps} g_raw(y_s)")
     
     meth_alg_3c = (
-        "and the global control variate updates as the average change:"
+        "The server then updates the global control variate by averaging the changes:"
     )
     add_paragraph_with_spacing(doc, meth_alg_3c, space_before=2, space_after=2)
     add_equation_block(doc, "c ← c + (1 / N_clients) · ∑ (c_k⁺ - c_k)")
@@ -414,13 +384,12 @@ def main():
     
     add_heading_with_spacing(doc, "1. Centralized Baseline & Local Optimizations", level=2)
     res_1 = (
-        "To establish a clinical diagnostic upper bound, we trained a centralized model on the full 413-image IDRiD training set "
-        "using locked hyperparameters: AdamW (learning rate η=1e-4, weight decay =1e-2), CosineAnnealingLR (T_max=25), and "
-        "data augmentations. The centralized baseline achieved a global test accuracy of 55.34% at epoch 4. "
-        "Table 1 outlines the hyperparameters and training outcomes. In a federated setup under extreme non-IID conditions (α=0.3), "
-        "a single local client training independently on its own partition (Client 0, 301 samples) and evaluated on the global test set "
-        "reaches a peak accuracy of only 42.72% (at epoch 19). The confusion matrix for this local model (Table 1) demonstrates "
-        "severe misclassification bias, primarily over-predicting the majority class due to local class imbalances."
+        "To establish a baseline, we trained a model centrally on all 413 IDRiD images using AdamW (learning rate η=1e-4, "
+        "weight decay 1e-2) and a Cosine Annealing scheduler (T_max=25). This centralized model peaked at 55.34% global accuracy "
+        "at epoch 4 (Table 1). For comparison, a single hospital client (Client 0) training on only its local slice of the data "
+        "(301 images, α=0.3) achieves a peak global accuracy of just 42.72% at round 19. The local model's confusion matrix in Table 1 "
+        "shows a heavy bias: it overpredicts Class 2 because its local data is skewed, demonstrating why small clinics struggle "
+        "to build useful models on their own."
     )
     add_paragraph_with_spacing(doc, res_1)
     
@@ -508,14 +477,13 @@ def main():
     
     add_heading_with_spacing(doc, "2. RetinaMNIST Hyperparameter Grid Sweep Results", level=2)
     res_2 = (
-        "The controlled hyperparameter sweep on the RetinaMNIST benchmark maps the performance boundaries across varying "
-        "Dirichlet data distributions. Table 2 compiles the final test accuracy and best round-to-round peak accuracy (averaged "
-        "across seeds 42, 123, and 777) for FedAvg, FedProx (with μ ∈ {0.01, 0.1, 1.0}), and the corrected SCAFFOLD algorithm. "
-        "Under extreme statistical skew (α=0.05 and 0.1), the proximal penalty acts as an artificial barrier that restricts "
-        "local adaptation, resulting in a performance drop. For instance, under α=0.1, FedProx with μ=1.0 degrades the final "
-        "accuracy from 43.50% (FedAvg) to 41.00%. However, under moderate to low heterogeneity (α=0.3 and 1.0), the proximal "
-        "constraint successfully stabilizes training and restricts client drift, with FedProx (μ=1.0) achieving a final accuracy "
-        "of 51.50%, significantly outperforming FedAvg's 46.92% (a +4.58% gain)."
+        "Table 2 shows the full sweep across heterogeneity levels and regularization strengths, averaged over three seeds. "
+        "The pattern that emerges is not what a naive reading of FedProx would predict. Under severe skew (α = 0.05 and 0.1), "
+        "pushing the regularization strength up hurts rather than helps — at α = 0.1, going from no regularization to μ = 1.0 "
+        "drops accuracy from 43.50% to 41.00%. It's only once the data becomes more balanced (α = 0.3 and above) that the "
+        "same strong regularization starts paying off, reaching 51.50% versus FedAvg's 46.92% — a genuine 4.58-point gain. "
+        "In other words, FedProx isn't uniformly better or worse than FedAvg; its usefulness flips depending on how unevenly the "
+        "data is distributed in the first place, and that crossover happens somewhere between α = 0.1 and α = 0.3."
     )
     add_paragraph_with_spacing(doc, res_2)
     
@@ -576,15 +544,14 @@ def main():
         
     add_heading_with_spacing(doc, "3. IDRiD Clinical Sweep Results & Statistical Underpower Analysis", level=2)
     res_3 = (
-        "The experiments were scaled to the clinical fundus images of the IDRiD dataset. Table 3 compiles the sweep metrics "
-        "for the clinical network (seeds 42, 123, and 777) across concentration parameters α and regularizer weights μ. "
-        "Under α=0.3, we observe that FedProx (μ=1.0, seed 42) reduces client-to-client accuracy standard deviation "
-        "from 0.0520 down to 0.0159, proving its stabilizing behavior. However, the average final accuracy improvements remain "
-        "statistically constrained due to the high seed-to-seed variance. Evaluating the observed mean difference in global test accuracy "
-        "(Δ = 0.010) against the high seed variance (σ = 0.083) yields a Cohen's d effect size of 0.1205. To achieve "
-        "a conventional statistical significance level of p < 0.05 with 80% power, the network would require 1,082 seeds per group. "
-        "This mathematically proves that the small-scale IDRiD training set (413 samples) is statistically underpowered, necessitating "
-        "the ingestion of the scaled 4,075-image IDRiD+APTOS combined dataset."
+        "We scaled the sweep to the actual IDRiD clinical scans. Under moderate skew (α=0.3), adding the proximal penalty (μ=1.0) "
+        "on seed 42 helped stabilize training: the client-to-client standard deviation dropped from 0.0520 to 0.0159. However, when "
+        "we look at the average final accuracy across all configurations, the improvements are small and easily drowned out "
+        "by seed-to-seed variance. A power analysis highlights this issue. With a mean accuracy difference of Δ=0.010 and a "
+        "seed standard deviation of σ=0.083, the Cohen's d effect size is a very small 0.1205. To detect this difference "
+        "with standard statistical confidence (p < 0.05 at 80% power) would require running 1,082 random seeds per configuration. "
+        "This suggests that the small 413-image IDRiD sweep is simply underpowered, which is what led us to use the combined "
+        "IDRiD+APTOS dataset."
     )
     add_paragraph_with_spacing(doc, res_3)
     
@@ -642,13 +609,11 @@ def main():
         
     add_heading_with_spacing(doc, "4. Combined IDRiD + APTOS Scaled Sweep Results", level=2)
     res_4 = (
-        "To mitigate statistical underpowering, we executed a scaled-up federated training run using the combined "
-        "4,075-image IDRiD+APTOS training set. Table 4 outlines the results for this large-scale clinical pipeline "
-        "(alpha=0.1, seed=42). We explicitly frame this as a preliminary, single-configuration result from an in-progress "
-        "multi-seed sweep. Broader clinical conclusions and generalized performance assertions await the completion of the full "
-        "multi-seed sweep. Nonetheless, in this initial run, federated training on this larger volume of clinical images achieves "
-        "a peak global test accuracy of 55.34% (which is identical to the centralized baseline accuracy of 55.34%), showing "
-        "the promise of federated learning scaling under India's DPDP Act constraints."
+        "To address this underpowering, we ran a scaled federated trial using a combined 4,075-image IDRiD+APTOS dataset. "
+        "We must emphasize that this is a preliminary, single-configuration run (α=0.1, seed=42) from an in-progress "
+        "sweep; we cannot draw broad conclusions until the full multi-seed run is complete. That caveat aside, this "
+        "larger trial reached a peak global accuracy of 55.34%, matching the centralized baseline. This is a promising "
+        "early sign that scaling up the data volume allows federated learning to recover centralized performance levels."
     )
     add_paragraph_with_spacing(doc, res_4)
     
@@ -690,17 +655,14 @@ def main():
     
     add_heading_with_spacing(doc, "5. Honest SCAFFOLD Debugging Analysis", level=2)
     res_5 = (
-        "During our initial sweeps, a critical anomaly was detected where the SCAFFOLD strategy produced a flat global "
-        "accuracy of exactly 43.50% across all concentration parameters α. This was diagnosed as an implementation "
-        "bug where: (1) BatchNorm running statistics (running mean and variance) were omitted during global-local weight exchange, "
-        "retaining random initializations at evaluation; and (2) global and client control variates signature positions were swapped, "
-        "applying drift corrections with the wrong sign. Redefining model weights exchange using the full state_dict and correcting the "
-        "control signature resolved the issue. In our verification runs (Table 2), SCAFFOLD demonstrated improved stability at concentration "
-        "parameters α=0.05, 0.3, and 1.0, achieving mean final accuracies of 48.50%, 48.83%, and 48.00% respectively. However, under α=0.1, "
-        "SCAFFOLD exhibits an anomalous mean final accuracy of 23.33% (with a peak best accuracy of 47.50%), showing an unresolved "
-        "anomaly that is under continued active investigation. This indicates that while the control variate bug is successfully "
-        "resolved structurally, training stability under certain intermediate skews remains highly sensitive to local hyperparameters "
-        "and requires further tuning."
+        "Our initial sweeps hit a wall: SCAFFOLD remained flat at 43.50% accuracy across all α values. We traced this to two bugs "
+        "in our implementation. First, the weight exchange function was omitting BatchNorm running statistics (running mean and variance), "
+        "which meant the model evaluated on random initializations. Second, the signature parameters for updating the global "
+        "and client control variates were swapped, applying the drift correction with the wrong sign. "
+        "Fixing these bugs stabilized the algorithm. As shown in Table 2, the corrected SCAFFOLD achieved final average accuracies "
+        "of 48.50% (α=0.05), 48.83% (α=0.3), and 48.00% (α=1.0). However, at α=0.1, SCAFFOLD collapsed to a final average accuracy "
+        "of 23.33% (though it reached a peak of 47.50% during training). This indicates that while the structural bugs are fixed, "
+        "SCAFFOLD remains highly sensitive to local hyperparameter choices under certain skew levels, an anomaly we are still investigating."
     )
     add_paragraph_with_spacing(doc, res_5)
     
@@ -708,16 +670,14 @@ def main():
     add_heading_with_spacing(doc, "Section V: Conclusion & Future Work", level=1, space_before=18)
     
     conclusion_text = (
-        "This empirical study systematically maps the operational boundaries of federated diabetic retinopathy grading under statistical "
-        "heterogeneity, contextualized within the compliance requirements of India's DPDP Act of 2023. Our experiments verify a distinct "
-        "performance phase transition: proximal regularization degrades accuracy under extreme heterogeneity but provides up to a +4.58% "
-        "accuracy gain under moderate heterogeneity. Importantly, regularized federated training serves as a clinical fairness stabilizer, "
-        "reducing inter-client accuracy variance and boosting the worst-performing client's accuracy by +27.69% relative to FedAvg. "
-        "We also resolve the SCAFFOLD implementation bug, proving that correcting control variate updates stabilizes optimization. Finally, "
-        "our power analysis reveals that small clinical cohorts are statistically underpowered, validating the necessity of a combined "
-        "IDRiD+APTOS scaled-up training pipeline which successfully restores performance to centralized levels (55.34%). Future work "
-        "will focus on developing adaptive regularization techniques to dynamically tune μ based on local class divergence, and "
-        "validating the corrected SCAFFOLD pipeline across larger clinical networks."
+        "This study maps out where proximal regularization helps and where it gets in the way when training federated models on skewed "
+        "diabetic retinopathy datasets. The experiments show a clear phase transition: tight regularization hurts performance "
+        "under severe data skew but offers a solid 4.58-point improvement under moderate skew. More importantly for clinical use, "
+        "FedProx acts as a fairness stabilizer, reducing the performance gap between hospitals and boosting the worst-performing "
+        "client's accuracy by up to 27.69%. We also debugged the SCAFFOLD implementation, showing that while control variates "
+        "correct client drift in theory, they can be highly sensitive to hyperparameters in practice. Finally, our power analysis "
+        "suggests that small clinical datasets are statistically underpowered, pointing to the necessity of larger, combined "
+        "cohorts like the IDRiD+APTOS pipeline to confirm these optimization behaviors."
     )
     add_paragraph_with_spacing(doc, conclusion_text)
     
